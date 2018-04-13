@@ -1,0 +1,303 @@
+import re
+import scrapy
+from scrapy.spiders import CrawlSpider
+from fed_reserve_jobs.items import FedReserveJobsItem
+
+
+class Fed_Reserve_Jobs(CrawlSpider):
+    name = "fed_reserve_jobs"
+
+    def __init__(self, keywords=None, category=None, *args, **kwargs):
+        super(Fed_Reserve_Jobs, self).__init__(*args, **kwargs)
+        self.keywords = keywords
+        self.category = category
+
+    def start_requests(self):
+        url = "https://frbog.taleo.net/careersection/1/moresearch.ajax"
+
+        job_category = {"All": "-1",
+                        "Accounting": "110100124",
+                        "Administrative": "210100124",
+                        "Architecture/Engineering": "2110100124",
+                        "Attorney": "2210100124",
+                        "Bank Examiner": "2310100124",
+                        "Business Analyst": "2410100124",
+                        "Computer Professional": "2510100124",
+                        "Computer Support": "2610100124",
+                        "Economist": "2710100124",
+                        "Editors/Writers": "2810100124",
+                        "EEO": "310100124",
+                        "Financial Analyst": "410100124",
+                        "Governors": "510100124",
+                        "Graphic Design": "610100124",
+                        "Health Services": "2910100124",
+                        "Human Resources": "3010100124",
+                        "Interns": "3110100124",
+                        "Mail Services and Supply": "3210100124",
+                        "Other Clerical-Acctg/Payroll": "3310100124",
+                        "Other Clerical-Administration": "3410100124",
+                        "Other Clerical-Bldg Services": "3510100124",
+                        "Other Clerical-ComputerSupport": "3610100124",
+                        "Other Clerical-Finance/Bus An": "3710100124",
+                        "Other Clerical Food Services": "3810100124",
+                        "Other Clerical-Graphics": "3910100124",
+                        "Other Clerical-HR": "4010100124",
+                        "Other Clerical-Mail Svc/Supply": "4110100124",
+                        "Other Clerical-Other": "4210100124",
+                        "Other Clerical-PR/Writ/Edit": "4310100124",
+                        "Other Clerical-Purchasing": "4410100124",
+                        "Other Clerical-Training": "4510100124",
+                        "Other Professional": "4610100124",
+                        "Public Relations": "4710100124",
+                        "Purchasing": "4810100124",
+                        "Research Assistant": "4910100124",
+                        "Security Administration": "5010100124",
+                        "Security Escort": "5110100124",
+                        "Secrtry/Steno/Clerk Typ/Recept": "710100124",
+                        "Security Admin Support": "810100124",
+                        "Security": "910100124",
+                        "Trade/Crafts-Eng/Plant": "1010100124",
+                        "Trade/Crafts-Food Service": "1110100124",
+                        "Trade/Crafts-Maintenance": "5210100124",
+                        "Trade/Crafts-Motor Transport": "5310100124",
+                        "Trade/Crafts-Other": "5410100124",
+                        "Trade/Crafts-Print/Litho": "5510100124",
+                        "Trade/Crafts-Postal/Supply": "5610100124",
+                        "Training": "5710100124"}
+
+        post_data = {"iframemode": "1",
+                     "ftlpageid": "reqListAdvancedPage",
+                     "ftlinterfaceid": "advancedSearchFooterInterface",
+                     "ftlcompid": "SEARCH",
+                     "jsfCmdId": "SEARCH",
+                     "ftlcompclass": "ButtonComponent",
+                     "ftlcallback": "jobsearch_processSearch",
+                     "ftlajaxid": "ftlx1",
+                     "lang": "en",
+                     "ftlhistory": "",
+                     "ftlPageHistory": "",
+                     "ftlwinscr": "7",
+                     "ftlerrors": "",
+                     "portal": "",
+                     "tz": "GMT+08:00",
+                     "iniurl.src": "",
+                     "iniurl.media_id": "",
+                     "iniurl.sns_id": "",
+                     "iniurl.use_up": "",
+                     "zipcodePanelErrorDrawer.state": "false",
+                     "rlPager.pageLabelBeforeHidden": " ",
+                     "radiusSiteListPagerId.nbDisplayPage": "5",
+                     "radiusSiteListId.isEmpty": "true",
+                     "siteListId": "",
+                     "rssLocationIconTT": "This criteria can be used for RSS feed creation: ??Location??",
+                     "actOnReqReferralApplyReqList.mode": "",
+                     "employeeStatusMenu.selected": "",
+                     "radiusSiteListPagerId.currentPage": "1",
+                     "listEmptyIsApplicantUser": "false",
+                     "radiusSiteListPagerId.listId": "",
+                     "displayUrgentNeed": "true",
+                     "computeSiteListAction.zipcode": "",
+                     "jobCartIcon": "cart_black.gif",
+                     "initialHistory": "",
+                     "rlPager.pagerLabelAfterPreviousHidden": " ",
+                     "rlPager.pagerLabelTT": "Go to page {0}",
+                     "listCount": "37",
+                     "jobTypeMenu.selected": "jobTypeTab",
+                     "rlPager.pageLabelAfterHidden": " ",
+                     "listLocales": "",
+                     "rlPager.requisitionNo": "",
+                     "actOnReqApplyReqList.requisitionNo": "",
+                     "udf10Menu.selected": "100",
+                     "udf9Menu.selected": "",
+                     "studyLevelMenu.selected": "",
+                     "listLabels": "",
+                     "listRequisition.nbElements": "37",
+                     "tabLevel1.selected": "tabJS",
+                     "confirmBeaconTimedOut.a": "",
+                     "initialHistoryOld": "",
+                     "hideLinkTitle": "Hide Search Criteria",
+                     "actDisplayReferralProfiler.candidateNo": "",
+                     "mySavedSearchesPageLink.target": "",
+                     "rlPager.pagerLabelNext": "Next",
+                     "listRequisition.hasElements": "true",
+                     "radiusSiteListPagerId.pagerLabelPrevious": "Previous",
+                     "rlPager.pagerLabelPreviousTT": "Go to the previous page",
+                     "careerPortalFullVersionURLEnabled": "false",
+                     "searchcriteria.state": "true",
+                     "isExternal": "true",
+                     "tabLevel2a.selected": "tabAdvancedReqSearch",
+                     "udf5Menu.selected": "Go to the next page",
+                     "jobListName": "requisitionList",
+                     "radiusSiteListPagerId.pagerLabelNext": "Next",
+                     "rlPager.pagerLabelPrevious": "Previous",
+                     "radiusSiteListPagerId.requisitionNo": "",
+                     "displayAsMainHeader": "false",
+                     "displaymessage": "false",
+                     "tabLevel2b.selected": "",
+                     "actOnReqReferralApplyReqList.requisitionNo": "",
+                     "careerPortalFullVersionURL": "",
+                     "distance": "0",
+                     "confirmOverwrite.aor": "false",
+                     "udf3Menu.selected": "Next",
+                     "radiusSiteListId.size": "5",
+                     "hideLinkTitleTT": "Hide the search criteria",
+                     "jobsPerPageCaption": "Results per page",
+                     "willTravelMenu.selected": "willTravelTab",
+                     "addThisRequired": "false",
+                     "actOnReqReferralProfilerAgentReqList.requisitionNo": "",
+                     "actAddJobToCart.requisitionNo": "1",
+                     "radiusSiteListPagerId.pagerLabelTT": "Go to page {0}",
+                     "confirmBeaconTimedOut.aor": "false",
+                     "actOpenRequisitionDescription.requisitionNo": "",
+                     "rlPager.pagerLabelNextTT": "Go to the next page",
+                     "rlPager.listId": "listRequisition",
+                     "ftlISWLD": "false",
+                     "jobfields.count": "1",
+                     "rlPager.pagerLabelBeforePreviousHidden": "",
+                     "udf1Menu.selected": "",
+                     "displayDraft": "true",
+                     "listContenDescriptionTT": "",
+                     "mLastActiveMode": "reqListAdvancedPage",
+                     "jobShiftMenu.selected": "jobShiftTab",
+                     "zipcode": "",
+                     "canDisplayFacebookButton": "false",
+                     "isInternal": "false",
+                     "confirmBeaconReset.aor": "false",
+                     "actOnReqApplyReqList.mode": "",
+                     "showLinkTitle": "Show Search Criteria",
+                     "rlPager.pagerLabelCount": "Go to page {0}",
+                     "udf8Menu.selected": "",
+                     "navigate.url": "",
+                     "organizations.count": "",
+                     "actDisplayReferralProfiler.requisitionNo": "",
+                     "computeSiteListAction.siteListId": "",
+                     "radiusSiteListPagerId.pagerLabelBeforePreviousHidden": "",
+                     "commonDescriptionForAddThis": "",
+                     "jobFieldMenu.selected": "tabJobField",
+                     "ftlISWLDMessage": "",
+                     "navigate.target": "reqListAdvancedPage",
+                     "radiusSiteListId.nbElements": "0",
+                     "savecriteria.state": "false",
+                     "postedDateMenu.selected": "postedDateTab",
+                     "organizationMenu.selected": "",
+                     "rlPager.currentPage": "1",
+                     "radiusSiteListPagerId.pagerLabelNextTT": "Go to the next page",
+                     "locationSiteId": "0",
+                     "showLinkTitleTT": "Show the search criteria",
+                     "actOnReqReferralApplyReqList.candidateNo": "",
+                     "confirmOverwrite.a": "",
+                     "countryPanelErrorDrawer.state": "false",
+                     "csrftoken": "1RbEoMNOeInOEnbj+U5w/bMZbhYlRXwSuOQl/PEwxLk=",
+                     "radiusLocationEmpty": "false",
+                     "isApplicantUser": "true",
+                     "urgentMenu.selected": "",
+                     "alreadyAppliedColumnDisplayed": "true",
+                     "pBeaconBeat": "300000",
+                     "computeSiteListAction.distance": "0",
+                     "computeSiteListAction.locationSiteId": "",
+                     "focusOnField": "",
+                     "radiusSiteListPagerId.pagerLabelAfterNextHidden": " ",
+                     "restoreInitialHistoryOnRefresh": "false",
+                     "listRequisition.size": "100",
+                     "calloutPageDisplayed": "false",
+                     "radiusSiteListPagerId.pagerLabelCount": "Go to page {0}",
+                     "requisitionno": "",
+                     "rlPager.pagerLabelAfterNextHidden": " ",
+                     "jobScheduleMenu.selected": "jobScheduleTab",
+                     "radiusContryName": "",
+                     "mySavedSearchesPageLink.url": "",
+                     "udf7Menu.selected": "",
+                     "rlPager.nbDisplayPage": "5",
+                     "radiusSiteListPagerId.pagerLabelBeforeNextHidden": " ",
+                     "signedIn": "false",
+                     "emptyListToken": "",
+                     "pSessionTimeout": "1200000",
+                     "actOnReqApplyReqList.candidateNo": "",
+                     "isEnabled": "true",
+                     "actOnReqReferralProfilerAgentReqList.candidateNo": "",
+                     "jobLevelMenu.selected": "",
+                     "tabLocationPatch": "false",
+                     "errorMessageDrawer.state": "false",
+                     "jobboardListPageTitle": "Job Search - Job Search",
+                     "radiusActive": "false",
+                     "actOpenRequisitionDescription.openDescFrom": "default",
+                     "locations.count": "1",
+                     "confirmBeaconReset.a": "",
+                     "isListEmpty": "false",
+                     "udf4Menu.selected": "",
+                     "actOnReqReferralProfilerAgentReqList.mode": "",
+                     "radiusSiteListPagerId.pagerLabelPreviousTT": "Go to the previous page",
+                     "serializedCriteria": "19::;;20::;;21::;;",
+                     "actDisplayReferralProfiler.mode": "",
+                     "rlPager.pagerLabelBeforeNextHidden": " ",
+                     "udf2Menu.selected": "",
+                     "radiusSiteListId.hasElements": "false",
+                     "locationMenu.selected": "Go to the next page",
+                     "cshtstate": "12|",
+                     "rssJobFieldIconTT": "This criteria can be used for RSS feed creation: ??JobField??",
+                     "listRequisition.isEmpty": "false",
+                     "canDisplayRSSButton": "false",
+                     "canDisplaySavedSearchHelp": "false",
+                     "radiusSiteListDrawer.state": "false",
+                     "displayCalloutInLegend": "false",
+                     "initialHistoryPage": "1",
+                     "descriptionLogginMandatory": "false",
+                     "radiusSiteListPagerId.pageLabelAfterHidden": " ",
+                     "computeSiteListAction.unit": "0",
+                     "applicationCandidateNo": "",
+                     "radiusSiteListPagerId.pageLabelBeforeHidden": " ",
+                     "rssRadiusIconTT": "This criteria can be used for RSS feed creation: Zip/Postal Code Radius",
+                     "displayListingsPerPage": "true",
+                     "radiusSiteListPagerId.pagerLabelAfterPreviousHidden": " ",
+                     "pSessionWarning": "600000",
+                     "udf6Menu.selected": "",
+                     "interfaceIdForTimeZone": "requisitionListInterface",
+                     "nameValue": "",
+                     "jobNumberSearch": "",
+                     "keyword": "",
+                     "jobfield1": "-1",
+                     "postedDate": "com.taleo.careersection.entity.lookup.PostedDate__0",
+                     "languageSelect": "",
+                     "jobfield1L1": "-1",
+                     "location1L1": "-1",
+                     "dropListSize": "100",
+                     "dropSortBy": "10"}
+
+        if self.keywords:
+            post_data['keyword'] = self.keywords
+        if self.category:
+            if self.category in job_category:
+                post_data['jobfield1'] = job_category[self.category]
+                post_data['jobfield1L1'] = job_category[self.category]
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'}
+
+        yield scrapy.FormRequest(url, callback=self.parse_page, formdata=post_data, headers=headers)
+
+    def parse_page(self, response):
+        html = response.text
+        result = re.findall(r'\|!Submission for the position%5C: (.*?) - \(Job Number%5C: (\d+)\)!\|', html)
+        if result:
+            print "keywords: %s Category : %s get %s numbers of results" % (self.keywords, self.category, len(result))
+            print ""
+            for item in result:
+                job_id = item[1]
+                job_name = "%s-%s" % (item[0], item[1])
+                other_info = re.findall(r'\|!%s!\|!(.*?)!\|!false!\|!!\|!!\|!!\|!!\|!(.*?)!\|!Apply!\|' % job_id, html)
+                if other_info:
+                    job_location = other_info[0][0]
+                    job_posting = other_info[0][1]
+                    print "job_id: %s" % job_id
+                    print "job_name: %s" % job_name
+                    print "job_location: %s" % job_location
+                    print "job_posting: %s" % job_posting
+                    print ""
+                    item = FedReserveJobsItem()
+                    item["job_id"] = job_id
+                    item["job_name"] = job_name
+                    item["job_location"] = job_location
+                    item["job_posting"] = job_posting
+                    yield item
+        else:
+            print "keywords:%s Category:%s get none" % (self.keywords, self.category)
